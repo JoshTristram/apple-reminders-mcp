@@ -1,21 +1,33 @@
 # MCP Apple Reminders
 
-A Model Context Protocol (MCP) server for interacting with Apple Reminders on macOS.
+Model Context Protocol (MCP) server for interacting with Apple Reminders on macOS.
 
 ## Features
 
-- **List Management**: View all reminder lists in your Apple Reminders app
-- **Reminder Retrieval**: Get all reminders from a specific list
-- **Create Reminders**: Create new reminders with titles, due dates, and notes
-- **Complete Reminders**: Mark reminders as completed
-- **Delete Reminders**: Remove reminders from your lists
-- **Date Handling**: Proper handling of ISO date formats for due dates
+- List reminder lists (`getLists`)
+- Read reminders from a list (`getReminders`)
+- Create reminders with optional due date and notes (`createReminder`)
+- Mark reminders complete (`completeReminder`)
+- Delete reminders (`deleteReminder`)
+- Standardized JSON responses with error details for easier client handling
 
-## Configuration
+## Requirements
 
-### Usage with Claude Desktop
+- macOS (Apple Reminders automation is macOS-only)
+- Node.js 18+
+- Yarn 1.x
+- Apple Reminders configured with at least one list
 
-Add this to your `claude_desktop_config.json`:
+## Install
+
+```bash
+yarn install
+yarn build
+```
+
+## Use with MCP Clients
+
+Example `claude_desktop_config.json` entry:
 
 ```json
 {
@@ -23,75 +35,75 @@ Add this to your `claude_desktop_config.json`:
     "apple-reminders": {
       "command": "node",
       "args": [
-        "/path/to/mcp-apple-reminders/dist/index.js"
+        "/absolute/path/to/apple-reminders-mcp/dist/index.js"
       ]
     }
   }
 }
 ```
 
-### NPX (Coming Soon)
+## Tool API
 
-```json
-{
-  "mcpServers": {
-    "apple-reminders": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@modelcontextprotocol/server-apple-reminders"
-      ]
-    }
-  }
-}
-```
+### `getLists`
 
-## API
+Returns all reminder list names.
 
-The server exposes the following MCP tools for interacting with Apple Reminders:
+### `getReminders`
 
-### getLists
-Returns all reminder lists.
+Parameters:
+- `listName` (string, required)
 
-### getReminders
-Returns reminders from a specific list.
-- Parameters:
-  - `listName` (required): The name of the reminder list
+Returns reminders from the given list with:
+- `name`
+- `completed`
+- `dueDate` (ISO string or `null`)
+- `priority`
+- `notes` (string or `null`)
 
-### createReminder
-Creates a new reminder.
-- Parameters:
-  - `listName` (required): The name of the reminder list
-  - `title` (required): The title of the reminder
-  - `dueDate` (optional): The due date for the reminder (ISO format: "YYYY-MM-DDTHH:MM:SS.sssZ")
-  - `notes` (optional): Notes for the reminder
+### `createReminder`
 
-### completeReminder
-Marks a reminder as completed.
-- Parameters:
-  - `listName` (required): The name of the reminder list
-  - `reminderName` (required): The name of the reminder to complete
+Parameters:
+- `listName` (string, required)
+- `title` (string, required)
+- `dueDate` (string, optional; must be a valid date string)
+- `notes` (string, optional)
 
-### deleteReminder
-Deletes a reminder.
-- Parameters:
-  - `listName` (required): The name of the reminder list
-  - `reminderName` (required): The name of the reminder to delete
+### `completeReminder`
 
-## How It Works
+Parameters:
+- `listName` (string, required)
+- `reminderName` (string, required)
 
-This MCP server uses AppleScript to interact with the Apple Reminders app on macOS. It provides a standardized interface for AI assistants to manage reminders through the Model Context Protocol.
+Marks the first reminder with matching name as completed.
+
+### `deleteReminder`
+
+Parameters:
+- `listName` (string, required)
+- `reminderName` (string, required)
+
+Deletes the first reminder with matching name.
 
 ## Development
 
-This project uses TypeScript and the MCP SDK. To extend functionality, modify the tools in `src/index.ts` and the AppleScript functions in `src/reminders.ts`.
+Scripts:
 
-## Requirements
+- `yarn build` compiles TypeScript to `dist/`
+- `yarn typecheck` runs type-checking without emitting files
+- `yarn dev` starts from TypeScript source
+- `yarn test` runs integration tests (`build` + test runner)
 
-- macOS (required for Apple Reminders integration)
-- Node.js 16+
-- Apple Reminders app configured with at least one list
+Test notes:
+
+- `yarn test` interacts with real Apple Reminders data.
+- It creates, completes, and deletes a temporary reminder in your first available list.
+
+## Implementation Notes
+
+- Core MCP tool registration: `src/index.ts`
+- Apple Reminders integration wrapper: `src/reminders.ts`
+- Integration test flow: `src/tests/test-reminders.ts`
 
 ## License
 
-MIT 
+MIT

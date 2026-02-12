@@ -1,5 +1,11 @@
 import * as reminders from '../reminders.js';
 
+function assert(condition: unknown, message: string): asserts condition {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
 /**
  * Test all reminders functions
  */
@@ -13,8 +19,7 @@ async function testReminders() {
     console.log('Available lists:', lists);
     
     if (lists.length === 0) {
-      console.error('No reminder lists found. Please create at least one list in the Reminders app.');
-      return;
+      throw new Error('No reminder lists found. Please create at least one list in the Reminders app.');
     }
     
     // Use the first list for testing
@@ -36,6 +41,7 @@ async function testReminders() {
       'Created by MCP test script'
     );
     console.log('Create result:', createResult);
+    assert(createResult, 'Failed to create reminder');
     
     // Wait a moment for the reminder to be created
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -47,14 +53,14 @@ async function testReminders() {
     console.log('Found created reminder:', createdReminder);
     
     if (!createdReminder) {
-      console.error('Failed to find the created reminder!');
-      return;
+      throw new Error('Failed to find the created reminder');
     }
     
     // Test 5: Mark the reminder as completed
     console.log('\n5. Marking the reminder as completed...');
     const completeResult = await reminders.completeReminder(testList, testReminderTitle);
     console.log('Complete result:', completeResult);
+    assert(completeResult, 'Failed to mark reminder as completed');
     
     // Wait a moment for the reminder to be updated
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -64,11 +70,14 @@ async function testReminders() {
     const completedReminders = await reminders.getRemindersFromList(testList);
     const completedReminder = completedReminders.find(r => r.name === testReminderTitle);
     console.log('Completed reminder:', completedReminder);
+    assert(completedReminder, 'Completed reminder not found');
+    assert(completedReminder.completed, 'Reminder was not marked completed');
     
     // Test 7: Delete the reminder
     console.log('\n7. Deleting the test reminder...');
     const deleteResult = await reminders.deleteReminder(testList, testReminderTitle);
     console.log('Delete result:', deleteResult);
+    assert(deleteResult, 'Failed to delete reminder');
     
     // Wait a moment for the reminder to be deleted
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -78,11 +87,13 @@ async function testReminders() {
     const finalReminders = await reminders.getRemindersFromList(testList);
     const deletedReminder = finalReminders.find(r => r.name === testReminderTitle);
     console.log('Deleted reminder found:', deletedReminder ? 'Yes (error)' : 'No (success)');
+    assert(!deletedReminder, 'Reminder was not deleted');
     
     console.log('\n=== Test Complete ===');
     
   } catch (error) {
     console.error('Test failed with error:', error);
+    process.exitCode = 1;
   }
 }
 
